@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-users-sequence
+      author: elyashevich
+      changes:
+        - createSequence:
+            sequenceName: users_id_seq
+            dataType: BIGINT
+            startValue: 1
+            incrementBy: 50
+
+  - changeSet:
+      id: 002-create-users
+      author: elyashevich
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_users
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_users_email
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email_verified_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: refresh_token_hash
+                  type: VARCHAR(64)
+                  constraints:
+                    unique: true
+                    uniqueConstraintName: uk_users_refresh_token_hash
+              - column:
+                  name: refresh_token_expires_at
+                  type: TIMESTAMP WITH TIME ZONE

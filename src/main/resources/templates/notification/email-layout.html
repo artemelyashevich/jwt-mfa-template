@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${locale}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title th:text="${subject}">LapaLink</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f2ee; font-family:-apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color:#1f1d1a;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f2ee;">
+    <tr>
+        <td align="center" style="padding:32px 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+                <tr>
+                    <td align="center" style="padding:0 8px 20px;">
+                        <img src="cid:logo" alt="LapaLink" width="120" height="120"
+                             style="display:block; width:120px; height:120px; border:0; border-radius:16px;">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background-color:#ffffff; border-radius:16px; padding:32px 28px; font-size:15px; line-height:1.6; color:#1f1d1a;"
+                        th:utext="${content}">
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:20px 8px 0; font-size:12px; line-height:1.5; color:#8a847c;">
+                        <span th:text="${locale == 'be'
+                                ? 'Гэты ліст адпраўлены аўтаматычна, адказваць на яго не трэба.'
+                                : 'Это письмо отправлено автоматически, отвечать на него не нужно.'}"></span>
+                        <br>
+                        &copy; LapaLink
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
