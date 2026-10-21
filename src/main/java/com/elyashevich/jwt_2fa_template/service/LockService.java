@@ -1,8 +1,8 @@
 package com.elyashevich.jwt_2fa_template.service;
 
 import com.elyashevich.jwt_2fa_template.exception.AppExceptionCode;
-import io.reactivex.rxjava3.annotations.NonNull;
 import java.util.function.Supplier;
+import lombok.NonNull;
 
 public interface LockService {
 

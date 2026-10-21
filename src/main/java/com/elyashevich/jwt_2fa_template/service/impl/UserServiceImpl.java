@@ -3,7 +3,7 @@ package com.elyashevich.jwt_2fa_template.service.impl;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
 import com.elyashevich.jwt_2fa_template.exception.AppException;
 import com.elyashevich.jwt_2fa_template.exception.AppExceptionCode;
-import com.elyashevich.jwt_2fa_template.repositroy.UserProfileRepository;
+import com.elyashevich.jwt_2fa_template.repository.UserProfileRepository;
 import com.elyashevich.jwt_2fa_template.service.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -11,10 +11,10 @@ import jakarta.persistence.LockModeType;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +36,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserProfile findById(Long id) {
+        return userProfileRepository.findWithRolesById(id)
+            .orElseThrow(() -> new AppException(AppExceptionCode.EX404_USER_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional
     public UserProfile update(Long id, Consumer<UserProfile> mutation) {
         UserProfile user = lockForUpdate(id);
         mutation.accept(user);
@@ -43,6 +50,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void recordLogin(Long userId, String refreshTokenHash, Instant lastLoginAt) {
         if (userProfileRepository.updateLoginState(userId, refreshTokenHash, lastLoginAt) == 0) {
             throw new AppException(AppExceptionCode.EX404_USER_NOT_FOUND);

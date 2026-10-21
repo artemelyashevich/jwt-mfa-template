@@ -112,7 +112,8 @@ public class UserSessionServiceImpl implements UserSessionService {
         }
     }
 
-    private Optional<UserSessionCache> findActiveSession(Long userId, String token) {
+    @Override
+    public Optional<UserSessionCache> findActiveSession(Long userId, String token) {
         Optional<UserSessionCache> local = localSessionCache.find(userId, token);
         if (local.isPresent()) {
             return local;

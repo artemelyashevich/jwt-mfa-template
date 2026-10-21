@@ -4,7 +4,7 @@ import com.elyashevich.jwt_2fa_template.dto.notification.NotificationChannel;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationDto;
 import com.elyashevich.jwt_2fa_template.entity.NotificationDelivery;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
-import com.elyashevich.jwt_2fa_template.repositroy.NotificationDeliveryRepository;
+import com.elyashevich.jwt_2fa_template.repository.NotificationDeliveryRepository;
 import com.elyashevich.jwt_2fa_template.service.notification.template.NotificationTemplateRenderer;
 import java.util.Locale;
 import java.util.Map;

@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-notification-delivery
+      author: elyashevich
+      changes:
+        - createTable:
+            tableName: notification_delivery
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_notification_delivery
+              - column:
+                  name: event
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_notification_delivery_user
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: recipient
+                  type: VARCHAR(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subject
+                  type: TEXT
+              - column:
+                  name: channel
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: body
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sent_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: status
+                  type: VARCHAR(16)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_error
+                  type: TEXT
+              - column:
+                  name: attempts
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: next_attempt_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: notification_delivery
+            columnNames: event_id, channel
+            constraintName: uk_notification_delivery_event_channel
+        - sql:
+            sql: >
+              CREATE INDEX ix_notification_delivery_pending ON notification_delivery (next_attempt_at)
+              WHERE status = 'PENDING'
+        - createIndex:
+            tableName: notification_delivery
+            indexName: ix_notification_delivery_created_at
+            columns:
+              - column:
+                  name: created_at

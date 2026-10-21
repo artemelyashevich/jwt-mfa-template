@@ -10,6 +10,8 @@ public interface UserSessionService {
 
     Optional<UserSessionCache> getCurrentUserSafety();
 
+    Optional<UserSessionCache> findActiveSession(Long userId, String token);
+
     void updateSession(UserProfile userProfile);
 
     void invalidateSession(Long userId);

@@ -5,7 +5,7 @@ import com.elyashevich.jwt_2fa_template.configuration.AsyncConfiguration;
 import com.elyashevich.jwt_2fa_template.dto.notification.DeliveryStatus;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationChannel;
 import com.elyashevich.jwt_2fa_template.entity.NotificationDelivery;
-import com.elyashevich.jwt_2fa_template.repositroy.NotificationDeliveryRepository;
+import com.elyashevich.jwt_2fa_template.repository.NotificationDeliveryRepository;
 import com.elyashevich.jwt_2fa_template.service.notification.sender.NotificationSender;
 import java.time.Duration;
 import java.time.Instant;
@@ -89,11 +89,6 @@ public class NotificationDispatcher {
         Integer deleted = transactionTemplate.execute(status -> deliveryRepository.deleteProcessedBefore(before));
         if (deleted != null && deleted > 0) {
             log.info("Deleted {} processed notification deliveries older than {}", deleted, before);
-        }
-        Instant inboxBefore = Instant.now().minus(properties.getInboxRetention());
-        Integer deletedInbox = transactionTemplate.execute(status -> deliveryRepository.deleteInboxBefore(inboxBefore));
-        if (deletedInbox != null && deletedInbox > 0) {
-            log.info("Deleted {} inbox notifications older than {}", deletedInbox, inboxBefore);
         }
     }
 

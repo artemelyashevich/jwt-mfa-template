@@ -1,4 +1,4 @@
-package com.elyashevich.jwt_2fa_template.repositroy;
+package com.elyashevich.jwt_2fa_template.repository;
 
 import com.elyashevich.jwt_2fa_template.dto.notification.DeliveryStatus;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationChannel;
@@ -6,7 +6,6 @@ import com.elyashevich.jwt_2fa_template.entity.NotificationDelivery;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -48,12 +47,4 @@ public interface NotificationDeliveryRepository extends JpaRepository<Notificati
         @Param("nextAttemptAt") Instant nextAttemptAt,
         @Param("lastError") String lastError,
         @Param("sentAt") Instant sentAt);
-
-    @Modifying
-    @Query("""
-        DELETE FROM NotificationDelivery d
-        WHERE d.channel = NotificationChannel.EMAIL
-          AND d.createdAt < :before
-        """)
-    int deleteInboxBefore(Instant before);
 }

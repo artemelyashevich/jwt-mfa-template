@@ -18,7 +18,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
 
 @Entity
 @Getter
@@ -42,17 +41,20 @@ public class NotificationDelivery {
 
     private String recipient;
 
+    @Column(name = "subject", columnDefinition = "text")
     private String subject;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "channel", nullable = false, length = 16)
     private NotificationChannel channel;
 
+    @Column(name = "body", nullable = false, columnDefinition = "text")
     private String body;
 
     @Column(name = "sent_at")
     private Instant sentAt;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
     private DeliveryStatus status = DeliveryStatus.PENDING;
@@ -66,6 +68,6 @@ public class NotificationDelivery {
     @Builder.Default
     private Instant nextAttemptAt = Instant.now();
 
-    @CreatedDate
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 }

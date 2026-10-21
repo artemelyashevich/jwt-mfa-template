@@ -7,8 +7,8 @@ import com.elyashevich.jwt_2fa_template.dto.notification.NotificationEventType;
 import com.elyashevich.jwt_2fa_template.entity.NotificationDelivery;
 import com.elyashevich.jwt_2fa_template.entity.UserLocale;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
-import com.elyashevich.jwt_2fa_template.repositroy.NotificationDeliveryRepository;
-import com.elyashevich.jwt_2fa_template.repositroy.UserProfileRepository;
+import com.elyashevich.jwt_2fa_template.repository.NotificationDeliveryRepository;
+import com.elyashevich.jwt_2fa_template.repository.UserProfileRepository;
 import com.elyashevich.jwt_2fa_template.service.notification.channel.NotificationChannelStrategy;
 import com.elyashevich.jwt_2fa_template.service.notification.template.NotificationTemplateRegistry;
 import com.elyashevich.jwt_2fa_template.service.notification.template.NotificationTemplateRenderer;
@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
@@ -39,16 +40,16 @@ public class NotificationServiceImpl implements NotificationService {
     private final TransactionTemplate writeTransactionTemplate;
 
     public NotificationServiceImpl(NotificationTemplateRegistry templateRegistry, NotificationDeliveryRepository deliveryRepository, UserProfileRepository userRepository,
-        NotificationTemplateRenderer renderer, List<NotificationChannelStrategy> strategies, TransactionTemplate readTransactionTemplate,
-        TransactionTemplate writeTransactionTemplate) {
+        NotificationTemplateRenderer renderer, List<NotificationChannelStrategy> strategies, PlatformTransactionManager transactionManager) {
         this.templateRegistry = templateRegistry;
         this.deliveryRepository = deliveryRepository;
         this.userRepository = userRepository;
         this.renderer = renderer;
         this.strategies = strategies.stream()
             .collect(Collectors.toMap(NotificationChannelStrategy::getChannel, Function.identity()));
-        this.readTransactionTemplate = readTransactionTemplate;
-        this.writeTransactionTemplate = writeTransactionTemplate;
+        this.readTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.readTransactionTemplate.setReadOnly(true);
+        this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
     }
 
 
@@ -109,6 +110,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     private NotificationDelivery createDelivery(NotificationDto dto, NotificationChannelStrategy strategy, String recipient) {
         return NotificationDelivery.builder()
+            .event(dto.getEventType())
+            .eventId(dto.getId())
             .channel(strategy.getChannel())
             .userId(dto.getUserId())
             .recipient(recipient)

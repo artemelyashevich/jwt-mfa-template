@@ -61,6 +61,7 @@ public class JwtServiceImpl implements JwtService {
             .sorted()
             .toList();
         return Jwts.builder()
+            .setId(UUID.randomUUID().toString())
             .setSubject(user.getId().toString())
             .claim("roles", roles)
             .setIssuedAt(now)

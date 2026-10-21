@@ -3,7 +3,6 @@ package com.elyashevich.jwt_2fa_template.service.impl;
 import static com.elyashevich.jwt_2fa_template.util.UserStatusUtil.ensureCanLogin;
 
 import com.elyashevich.jwt_2fa_template.annotation.BusinessLock;
-import com.elyashevich.jwt_2fa_template.configuration.ApplicationProperties;
 import com.elyashevich.jwt_2fa_template.dto.auth.CompleteRegistrationRequest;
 import com.elyashevich.jwt_2fa_template.dto.auth.JwtType;
 import com.elyashevich.jwt_2fa_template.dto.auth.LoginResponse;
@@ -15,7 +14,6 @@ import com.elyashevich.jwt_2fa_template.dto.cache.LockerType;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationDto;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationEventType;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
-import com.elyashevich.jwt_2fa_template.entity.Role;
 import com.elyashevich.jwt_2fa_template.entity.RoleCode;
 import com.elyashevich.jwt_2fa_template.entity.UserLocale;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
@@ -30,6 +28,7 @@ import com.elyashevich.jwt_2fa_template.service.UserService;
 import com.elyashevich.jwt_2fa_template.service.UserSessionService;
 import com.elyashevich.jwt_2fa_template.service.notification.NotificationService;
 import com.elyashevich.jwt_2fa_template.util.TransactionUtil;
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -59,6 +58,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final OtpService otpService;
     private final UserSessionService userSessionService;
 
+    private String dummyPasswordHash;
+
+    @PostConstruct
+    void initDummyPasswordHash() {
+        dummyPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
+    }
+
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @BusinessLock(type = LockerType.REGISTER, key = "#userRegistrationRequest.email")
@@ -87,6 +93,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Transactional
     public LoginResponse completeRegistration(CompleteRegistrationRequest completeRegistrationRequest) {
         Long userId = otpService.consumeConfirmation(completeRegistrationRequest.getConfirmationToken(), OtpType.EMAIL_VERIFICATION)
             .userId();
@@ -112,30 +119,42 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Transactional
+    @BusinessLock(type = LockerType.LOGIN, key = "#loginRequest.email")
     public LoginResponse login(UserLoginRequest loginRequest) {
         log.debug("Login attempt for user with email: {}", loginRequest.email());
-        UserProfile user = userService.findByEmail(loginRequest.email()).orElseThrow(() -> {
-            log.warn("Login attempt failed: user with email {} not found", loginRequest.email());
-            return new AppException(AppExceptionCode.EX401_INVALID_CREDENTIALS);
-        });
-        if (user.getStatus() == UserStatus.VERIFICATION_REQUIRE) {
-            log.warn("Login rejected for user {}: registration is not completed", user.getId());
-            throw new AppException(AppExceptionCode.EX403_EMAIL_NOT_VERIFIED);
-        }
-        if (!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
-            log.warn("Login attempt failed for user with email {}: password mismatch", user.getEmail());
+        Optional<UserProfile> found = userService.findByEmail(loginRequest.email());
+        String passwordHash = found.map(UserProfile::getPasswordHash).orElse(null);
+        if (!passwordMatches(loginRequest.password(), passwordHash)) {
+            log.warn("Login attempt failed for email {}: unknown user, registration not completed or password mismatch",
+                loginRequest.email());
             throw new AppException(AppExceptionCode.EX401_INVALID_CREDENTIALS);
         }
+        UserProfile user = found.orElseThrow();
         ensureCanLogin(user);
         return issueTokens(user);
     }
 
     @Override
+    @Transactional
     public LoginResponse refresh(RefreshTokenRequest refreshTokenRequest) {
-        return null;
+        String refreshToken = refreshTokenRequest.refreshToken();
+        Long userId = jwtService.extractUserId(refreshToken, JwtType.REFRESH);
+        UserProfile user = userService.update(userId, u -> {
+            if (u.getRefreshTokenHash() == null || !refreshTokenMatches(refreshToken, u.getRefreshTokenHash())) {
+                log.warn("Refresh attempt failed for user {}: token is stale, revoked or does not match", userId);
+                throw new AppException(AppExceptionCode.EX401_REFRESH_TOKEN_REVOKED);
+            }
+            ensureCanLogin(u);
+        });
+        LoginResponse loginResponse = issueTokens(user);
+        log.debug("Tokens refreshed for user {}", userId);
+        return loginResponse;
     }
 
     @Override
+    @Transactional
+    @BusinessLock(type = LockerType.ACCOUNT, key = BusinessLock.CURRENT_USER_KEY)
     public void logout() {
         Long userId = userSessionService.getCurrentUser().getUserId();
         userService.update(userId, u -> u.setRefreshTokenHash(null));
@@ -162,6 +181,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String accessToken = jwtService.generate(user, JwtType.ACCESS);
         String refreshToken = jwtService.generate(user, JwtType.REFRESH);
         return new LoginResponse(accessToken, refreshToken);
+    }
+
+    private boolean passwordMatches(String rawPassword, String passwordHash) {
+        boolean matches = passwordEncoder.matches(rawPassword, passwordHash == null ? dummyPasswordHash : passwordHash);
+        return passwordHash != null && matches;
+    }
+
+    private static boolean refreshTokenMatches(String refreshToken, String storedHash) {
+        return MessageDigest.isEqual(
+            hashRefreshToken(refreshToken).getBytes(StandardCharsets.UTF_8),
+            storedHash.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private static String hashRefreshToken(String refreshToken) {

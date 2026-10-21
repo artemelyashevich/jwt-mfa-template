@@ -2,7 +2,6 @@ package com.elyashevich.jwt_2fa_template.util;
 
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.BeanFactory;
@@ -37,7 +36,7 @@ public class SpELUtils {
     }
 
     public <T> T evaluate(String expression, EvaluationContext context, Class<T> type) {
-        if (StringUtils.isBlank(expression)) {
+        if (expression == null || expression.isBlank()) {
             return null;
         }
         if (!isSpelExpression(expression)) {

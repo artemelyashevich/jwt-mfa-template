@@ -51,7 +51,7 @@ public class UserProfile {
     @Column(name = "email", nullable = false, length = 320)
     private String email;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "email_verified_at")
@@ -65,7 +65,7 @@ public class UserProfile {
     private UserLocale locale = UserLocale.RU;
 
     @ToString.Exclude
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Column(name = "refresh_token_hash", length = 64)

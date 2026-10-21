@@ -16,8 +16,6 @@ public enum CacheType {
     }),
     USER_ACTIVE_TOKEN(new TypeReference<String>() {
     }),
-    IP_BLOCKED(new TypeReference<String>() {
-    }),
     OTP_CACHE(new TypeReference<OtpCache>() {
     }),
     OTP_ACTIVE_REQUEST(new TypeReference<String>() {

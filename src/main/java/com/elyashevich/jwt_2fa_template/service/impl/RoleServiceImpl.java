@@ -5,7 +5,7 @@ import com.elyashevich.jwt_2fa_template.entity.Role;
 import com.elyashevich.jwt_2fa_template.entity.RoleCode;
 import com.elyashevich.jwt_2fa_template.exception.AppException;
 import com.elyashevich.jwt_2fa_template.exception.AppExceptionCode;
-import com.elyashevich.jwt_2fa_template.repositroy.RoleRepository;
+import com.elyashevich.jwt_2fa_template.repository.RoleRepository;
 import com.elyashevich.jwt_2fa_template.service.CacheService;
 import com.elyashevich.jwt_2fa_template.service.RoleService;
 import java.util.Optional;

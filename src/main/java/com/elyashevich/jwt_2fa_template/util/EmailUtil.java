@@ -1,5 +1,6 @@
 package com.elyashevich.jwt_2fa_template.util;
 
+import java.util.Locale;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass

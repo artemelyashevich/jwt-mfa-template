@@ -1,6 +1,5 @@
 package com.elyashevich.jwt_2fa_template.dto.auth;
 
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-add-users-status-locale-last-login
+      author: elyashevich
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: status
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locale
+                  type: VARCHAR(8)
+                  defaultValue: RU
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_login_at
+                  type: TIMESTAMP WITH TIME ZONE
+
+  - changeSet:
+      id: 004-users-credentials-after-verification
+      author: elyashevich
+      changes:
+        - dropNotNullConstraint:
+            tableName: users
+            columnName: name
+            columnDataType: VARCHAR(100)
+        - dropNotNullConstraint:
+            tableName: users
+            columnName: password_hash
+            columnDataType: VARCHAR(255)
+        - sql:
+            sql: >
+              ALTER TABLE users ADD CONSTRAINT ck_users_credentials_required
+              CHECK (status = 'VERIFICATION_REQUIRE' OR (name IS NOT NULL AND password_hash IS NOT NULL))

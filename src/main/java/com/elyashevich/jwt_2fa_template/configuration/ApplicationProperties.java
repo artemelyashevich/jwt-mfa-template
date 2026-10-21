@@ -2,7 +2,6 @@ package com.elyashevich.jwt_2fa_template.configuration;
 
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
 import java.time.Duration;
-import java.time.ZoneId;
 import java.util.EnumMap;
 import java.util.Map;
 import lombok.Getter;
@@ -45,8 +44,6 @@ public class ApplicationProperties {
         private int otpTtlSeconds = 60;
         private int otpResendCooldownSeconds = 60;
         private int otpMaxAttempts = 5;
-        private Duration dictionaryTtl = Duration.ofHours(24);
-        private Duration myContentTtl = Duration.ofMinutes(5);
         private Duration otpConfirmationTtl = Duration.ofMinutes(10);
         private Duration localSessionTtl = Duration.ofSeconds(5);
         private Map<OtpType, OtpLimit> otpLimits = new EnumMap<>(OtpType.class);
@@ -70,8 +67,6 @@ public class ApplicationProperties {
     public static class Notification {
 
         private String emailFrom;
-        private String appsScriptUrl;
-        private String appsScriptSecret;
         private Duration dispatchDelay = Duration.ofSeconds(2);
         private Duration cleanupDelay = Duration.ofHours(1);
         private int batchSize = 20;
@@ -79,13 +74,7 @@ public class ApplicationProperties {
         private Duration retryDelay = Duration.ofSeconds(30);
         private Duration leaseDuration = Duration.ofMinutes(5);
         private Duration retention = Duration.ofDays(30);
-        private Duration inboxRetention = Duration.ofDays(90);
-        private Duration streamTimeout = Duration.ofMinutes(15);
-        private Duration streamHeartbeat = Duration.ofSeconds(10);
-        private int streamMaxPerUser = 5;
         private String templatesLocation = "classpath:templates/notification/";
         private Duration templatesRefresh = Duration.ofMinutes(5);
-        private ZoneId zone = ZoneId.of("Europe/Minsk");
-        private int helpOfferMatchedEmailDailyLimit = 10;
     }
 }

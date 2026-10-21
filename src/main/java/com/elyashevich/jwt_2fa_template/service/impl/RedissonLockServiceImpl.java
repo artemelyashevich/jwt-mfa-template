@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RedissonLockServiceImpl implements LockService {
 
-    private static final String LOCK_KEY_PREFIX = "lapa:lock:";
+    private static final String LOCK_KEY_PREFIX = "lock:";
 
     private final RedissonClient redissonClient;
 

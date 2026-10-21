@@ -1,5 +1,6 @@
 package com.elyashevich.jwt_2fa_template.dto.auth;
 
+import com.elyashevich.jwt_2fa_template.annotation.validation.MaxUtf8Bytes;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ public class CompleteRegistrationRequest extends AbstractOtpRequest {
 
     @NotBlank(message = "Пароль не должен быть пустым")
     @Size(min = 8, message = "Пароль должен быть не короче 8 символов")
+    @MaxUtf8Bytes(value = 72, message = "Пароль не должен превышать 72 байта (кириллический символ занимает 2 байта)")
     private String password;
 
     @NotBlank(message = "Отображаемое имя не должно быть пустым")
