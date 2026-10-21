@@ -7,6 +7,7 @@ import com.elyashevich.jwt_2fa_template.dto.auth.OtpResponse;
 import com.elyashevich.jwt_2fa_template.dto.auth.RefreshTokenRequest;
 import com.elyashevich.jwt_2fa_template.dto.auth.RegisterPreparationRequest;
 import com.elyashevich.jwt_2fa_template.dto.auth.UserLoginRequest;
+import com.elyashevich.jwt_2fa_template.dto.otp.CheckOtpRequest;
 import com.elyashevich.jwt_2fa_template.entity.UserLocale;
 import com.elyashevich.jwt_2fa_template.service.AuthenticationService;
 import com.elyashevich.jwt_2fa_template.util.HttpHeaderUtil;
@@ -40,9 +41,21 @@ public class AuthController {
         return authenticationService.completeRegistration(request);
     }
 
+    /**
+     * Checks the credentials and emails a login code; tokens are issued by {@code /login/confirm}.
+     * Calling it again resends the code once the resend cooldown has passed.
+     */
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody @Valid UserLoginRequest request) {
+    public OtpResponse login(@RequestBody @Valid UserLoginRequest request) {
         return authenticationService.login(request);
+    }
+
+    /**
+     * Exchanges the emailed login code for an access/refresh token pair.
+     */
+    @PostMapping("/login/confirm")
+    public LoginResponse confirmLogin(@RequestBody @Valid CheckOtpRequest request) {
+        return authenticationService.confirmLogin(request);
     }
 
     @PostMapping("/refresh")

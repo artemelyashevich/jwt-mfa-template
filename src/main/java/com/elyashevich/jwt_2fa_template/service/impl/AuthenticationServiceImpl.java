@@ -13,6 +13,7 @@ import com.elyashevich.jwt_2fa_template.dto.auth.UserLoginRequest;
 import com.elyashevich.jwt_2fa_template.dto.cache.LockerType;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationDto;
 import com.elyashevich.jwt_2fa_template.dto.notification.NotificationEventType;
+import com.elyashevich.jwt_2fa_template.dto.otp.CheckOtpRequest;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
 import com.elyashevich.jwt_2fa_template.entity.RoleCode;
 import com.elyashevich.jwt_2fa_template.entity.UserLocale;
@@ -121,7 +122,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     @BusinessLock(type = LockerType.LOGIN, key = "#loginRequest.email")
-    public LoginResponse login(UserLoginRequest loginRequest) {
+    public OtpResponse login(UserLoginRequest loginRequest) {
         log.debug("Login attempt for user with email: {}", loginRequest.email());
         Optional<UserProfile> found = userService.findByEmail(loginRequest.email());
         String passwordHash = found.map(UserProfile::getPasswordHash).orElse(null);
@@ -131,6 +132,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AppException(AppExceptionCode.EX401_INVALID_CREDENTIALS);
         }
         UserProfile user = found.orElseThrow();
+        ensureCanLogin(user);
+        OtpResponse otp = otpService.prepare(user.getId(), OtpType.LOGIN);
+        log.debug("Login code sent to user {}", user.getId());
+        return otp;
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse confirmLogin(CheckOtpRequest checkOtpRequest) {
+        Long userId = otpService.verify(checkOtpRequest, OtpType.LOGIN).userId();
+        UserProfile user = userService.findById(userId);
         ensureCanLogin(user);
         return issueTokens(user);
     }

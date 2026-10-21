@@ -6,7 +6,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum OtpType {
-    EMAIL_VERIFICATION(true);
+    EMAIL_VERIFICATION(true),
+    LOGIN(false);
 
     private final boolean confirmable;
 }

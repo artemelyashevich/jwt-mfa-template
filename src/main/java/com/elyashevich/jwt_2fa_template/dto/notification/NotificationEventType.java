@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum NotificationEventType {
 
     EMAIL_VERIFICATION(NotificationScope.MANDATORY),
+    LOGIN_CODE(NotificationScope.MANDATORY),
     WELCOME(NotificationScope.ACCOUNT);
 
     private final NotificationScope scope;

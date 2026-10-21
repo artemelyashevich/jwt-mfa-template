@@ -3,6 +3,7 @@ package com.elyashevich.jwt_2fa_template.configuration;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
 import java.time.Duration;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +16,7 @@ public class ApplicationProperties {
 
     private Auth auth = new Auth();
     private Cache cache = new Cache();
+    private Cors cors = new Cors();
     private Notification notification = new Notification();
 
     @Getter
@@ -60,6 +62,17 @@ public class ApplicationProperties {
             return Duration.ofSeconds(otpResendCooldownSeconds);
         }
 
+    }
+
+    /**
+     * Browser origins (scheme://host[:port]) allowed to call the API cross-origin, e.g. a frontend served
+     * from another port or domain. Credentials are not allowed: the API authenticates via the Authorization header.
+     */
+    @Getter
+    @Setter
+    public static class Cors {
+
+        private List<String> allowedOrigins = List.of("http://localhost:3000");
     }
 
     @Getter

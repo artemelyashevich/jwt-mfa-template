@@ -12,8 +12,11 @@ import static org.mockito.Mockito.when;
 import com.elyashevich.jwt_2fa_template.dto.auth.CompleteRegistrationRequest;
 import com.elyashevich.jwt_2fa_template.dto.auth.JwtType;
 import com.elyashevich.jwt_2fa_template.dto.auth.LoginResponse;
+import com.elyashevich.jwt_2fa_template.dto.auth.OtpResponse;
 import com.elyashevich.jwt_2fa_template.dto.auth.RefreshTokenRequest;
 import com.elyashevich.jwt_2fa_template.dto.auth.UserLoginRequest;
+import com.elyashevich.jwt_2fa_template.dto.cache.OtpCache;
+import com.elyashevich.jwt_2fa_template.dto.otp.CheckOtpRequest;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpConfirmation;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
@@ -128,16 +131,62 @@ class AuthenticationServiceImplTest {
     }
 
     @Test
-    void loginIssuesTokensAndRecordsRefreshTokenHash() {
+    void loginSendsCodeWithoutIssuingTokens() {
         UserProfile user = user(UserStatus.ACTIVE);
+        OtpResponse otp = new OtpResponse("request", 60, 60);
         when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("StrongPass123", user.getPasswordHash())).thenReturn(true);
+        when(otpService.prepare(USER_ID, OtpType.LOGIN)).thenReturn(otp);
+
+        OtpResponse response = authenticationService.login(new UserLoginRequest(EMAIL, "StrongPass123"));
+
+        assertThat(response).isSameAs(otp);
+        verify(jwtService, never()).generate(any(), any());
+        verify(userService, never()).recordLogin(any(), anyString(), any());
+    }
+
+    @Test
+    void loginDoesNotSendCodeForWrongPassword() {
+        UserProfile user = user(UserStatus.ACTIVE);
+        when(userService.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", user.getPasswordHash())).thenReturn(false);
+
+        assertAppException(() -> authenticationService.login(new UserLoginRequest(EMAIL, "wrong")),
+            AppExceptionCode.EX401_INVALID_CREDENTIALS);
+        verify(otpService, never()).prepare(any(), any());
+    }
+
+    @Test
+    void confirmLoginIssuesTokensAndRecordsRefreshTokenHash() {
+        UserProfile user = user(UserStatus.ACTIVE);
+        CheckOtpRequest request = new CheckOtpRequest("request", "123456");
+        when(otpService.verify(request, OtpType.LOGIN)).thenReturn(otpCache());
+        when(userService.findById(USER_ID)).thenReturn(user);
         stubTokens(user, "access", "refresh");
 
-        LoginResponse response = authenticationService.login(new UserLoginRequest(EMAIL, "StrongPass123"));
+        LoginResponse response = authenticationService.confirmLogin(request);
 
         assertThat(response).isEqualTo(new LoginResponse("access", "refresh"));
         verify(userService).recordLogin(eq(USER_ID), eq(sha256("refresh")), any(Instant.class));
+    }
+
+    @Test
+    void confirmLoginRejectsInvalidCodeWithoutIssuingTokens() {
+        CheckOtpRequest request = new CheckOtpRequest("request", "000000");
+        when(otpService.verify(request, OtpType.LOGIN)).thenThrow(new AppException(AppExceptionCode.EX401_OTP_INVALID));
+
+        assertAppException(() -> authenticationService.confirmLogin(request), AppExceptionCode.EX401_OTP_INVALID);
+        verify(jwtService, never()).generate(any(), any());
+    }
+
+    @Test
+    void confirmLoginRejectsUserBlockedWhileCodeWasPending() {
+        CheckOtpRequest request = new CheckOtpRequest("request", "123456");
+        when(otpService.verify(request, OtpType.LOGIN)).thenReturn(otpCache());
+        when(userService.findById(USER_ID)).thenReturn(user(UserStatus.BLOCKED));
+
+        assertAppException(() -> authenticationService.confirmLogin(request), AppExceptionCode.EX403_USER_BLOCKED);
+        verify(jwtService, never()).generate(any(), any());
     }
 
     @Test
@@ -210,6 +259,10 @@ class AuthenticationServiceImplTest {
             .status(status)
             .emailVerifiedAt(status == UserStatus.VERIFICATION_REQUIRE ? null : Instant.now())
             .build();
+    }
+
+    private static OtpCache otpCache() {
+        return OtpCache.builder().userId(USER_ID).type(OtpType.LOGIN).requestId("request").otp("123456").build();
     }
 
     @SuppressWarnings("unchecked")

@@ -179,6 +179,7 @@ public class OtpServiceImpl implements OtpService {
     private static NotificationEventType toNotificationEvent(OtpType type) {
         return switch (type) {
             case EMAIL_VERIFICATION -> NotificationEventType.EMAIL_VERIFICATION;
+            case LOGIN -> NotificationEventType.LOGIN_CODE;
         };
     }
 
