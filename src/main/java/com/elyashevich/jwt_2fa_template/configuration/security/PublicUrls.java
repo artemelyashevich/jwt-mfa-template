@@ -12,6 +12,8 @@ public final class PublicUrls {
 
     public static final String ACCOUNT_TAG = PREFIX + "account";
 
+    public static final String ADMIN_TAG = PREFIX + "admin";
+
     public static final RequestMatcher PUBLIC_URLS = new OrRequestMatcher(
         PathPatternRequestMatcher.withDefaults().matcher("/error"),
         PathPatternRequestMatcher.withDefaults().matcher(AUTH_TAG + "/**")

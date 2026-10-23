@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-grant-admin-to-existing-user
+      author: elyashevich
+      comment: 006 skips an admin email that was already registered; give that account the admin role and password
+      changes:
+        - update:
+            tableName: users
+            columns:
+              - column: { name: password_hash, value: "${admin.password-hash}" }
+            where: email = '${admin.email}'
+        - sql:
+            sql: >
+              INSERT INTO user_roles (user_id, role_code)
+              SELECT u.id, r.code FROM users u CROSS JOIN roles r
+              WHERE u.email = '${admin.email}' AND r.code IN ('USER', 'ADMIN')
+              ON CONFLICT DO NOTHING

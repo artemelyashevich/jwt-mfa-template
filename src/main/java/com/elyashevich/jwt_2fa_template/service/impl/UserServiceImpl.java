@@ -4,15 +4,18 @@ import com.elyashevich.jwt_2fa_template.entity.UserProfile;
 import com.elyashevich.jwt_2fa_template.exception.AppException;
 import com.elyashevich.jwt_2fa_template.exception.AppExceptionCode;
 import com.elyashevich.jwt_2fa_template.repository.UserProfileRepository;
+import com.elyashevich.jwt_2fa_template.repository.specification.UserProfileSpecifications;
 import com.elyashevich.jwt_2fa_template.service.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.LockModeType;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,12 @@ public class UserServiceImpl implements UserService {
     public UserProfile findById(Long id) {
         return userProfileRepository.findWithRolesById(id)
             .orElseThrow(() -> new AppException(AppExceptionCode.EX404_USER_NOT_FOUND));
+    }
+
+    @Override
+    public List<UserProfile> searchByEmail(String emailPart) {
+        return userProfileRepository.findAll(UserProfileSpecifications.emailContains(emailPart),
+            Sort.by(UserProfile.Fields.email));
     }
 
     @Override

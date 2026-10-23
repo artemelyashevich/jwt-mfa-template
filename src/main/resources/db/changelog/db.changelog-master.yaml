@@ -14,3 +14,9 @@ databaseChangeLog:
   - include:
       file: 005-create-notification-delivery.yaml
       relativeToChangelogFile: true
+  - include:
+      file: 006-insert-admin.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 007-grant-admin.yaml
+      relativeToChangelogFile: true

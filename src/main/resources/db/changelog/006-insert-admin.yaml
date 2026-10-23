@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-insert-admin
+      author: elyashevich
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM users WHERE email = '${admin.email}'
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column: { name: id, valueComputed: "nextval('users_id_seq')" }
+              - column: { name: email, value: "${admin.email}" }
+              - column: { name: name, value: "${admin.name}" }
+              - column: { name: password_hash, value: "${admin.password-hash}" }
+              - column: { name: email_verified_at, valueComputed: now() }
+              - column: { name: status, value: ACTIVE }
+        - insert:
+            tableName: user_roles
+            columns:
+              - column: { name: user_id, valueComputed: "(SELECT id FROM users WHERE email = '${admin.email}')" }
+              - column: { name: role_code, value: USER }
+        - insert:
+            tableName: user_roles
+            columns:
+              - column: { name: user_id, valueComputed: "(SELECT id FROM users WHERE email = '${admin.email}')" }
+              - column: { name: role_code, value: ADMIN }

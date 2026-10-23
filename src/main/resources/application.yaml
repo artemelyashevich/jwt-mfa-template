@@ -17,6 +17,10 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+    parameters:
+      admin.email: ${ADMIN_EMAIL:admin@jwt-demo.local}
+      admin.name: ${ADMIN_NAME:Administrator}
+      admin.password-hash: ${ADMIN_PASSWORD_HASH}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
