@@ -19,6 +19,7 @@ import com.elyashevich.jwt_2fa_template.dto.cache.OtpCache;
 import com.elyashevich.jwt_2fa_template.dto.otp.CheckOtpRequest;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpConfirmation;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpType;
+import com.elyashevich.jwt_2fa_template.entity.RoleCode;
 import com.elyashevich.jwt_2fa_template.entity.UserProfile;
 import com.elyashevich.jwt_2fa_template.entity.UserStatus;
 import com.elyashevich.jwt_2fa_template.exception.AppException;
@@ -235,6 +236,16 @@ class AuthenticationServiceImplTest {
 
         assertAppException(() -> authenticationService.refresh(new RefreshTokenRequest("refresh")),
             AppExceptionCode.EX403_USER_BLOCKED);
+    }
+
+    @Test
+    void completeRegistrationPreservesConfirmationWhenDefaultRoleIsMissing() {
+        CompleteRegistrationRequest request = new CompleteRegistrationRequest("StrongPass123", "Ivan");
+        request.setConfirmationToken("confirmation");
+        when(roleService.findByRoleCode(RoleCode.USER)).thenThrow(new AppException(AppExceptionCode.EX404));
+
+        assertAppException(() -> authenticationService.completeRegistration(request), AppExceptionCode.EX404);
+        verify(otpService, never()).consumeConfirmation(any(), any());
     }
 
     @Test
