@@ -1,0 +1,35 @@
+type Query {
+    game(id: ID!): CheckersGame!
+}
+
+type Mutation {
+    createGame: CheckersGame!
+    joinGame(id: ID!): CheckersGame!
+    makeMove(id: ID!, expectedVersion: ID!, route: [Int!]!): CheckersGame!
+}
+
+type Subscription {
+    gameUpdated(id: ID!): CheckersGame!
+}
+
+type CheckersGame {
+    id: ID!
+    whitePlayerId: ID!
+    blackPlayerId: ID
+    board: String!
+    turn: CheckersSide!
+    status: CheckersGameStatus!
+    winner: CheckersSide
+    version: ID!
+}
+
+enum CheckersSide {
+    WHITE
+    BLACK
+}
+
+enum CheckersGameStatus {
+    WAITING
+    IN_PROGRESS
+    FINISHED
+}

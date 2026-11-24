@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-checkers-games
+      author: elyashevich
+      changes:
+        - createTable:
+            tableName: checkers_games
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_checkers_games
+              - column:
+                  name: white_player_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_checkers_games_white_player
+                    references: users(id)
+              - column:
+                  name: black_player_id
+                  type: BIGINT
+                  constraints:
+                    foreignKeyName: fk_checkers_games_black_player
+                    references: users(id)
+              - column:
+                  name: board
+                  type: VARCHAR(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: turn
+                  type: VARCHAR(5)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: winner
+                  type: VARCHAR(5)
+              - column:
+                  name: version
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >-
+              ALTER TABLE checkers_games
+              ADD CONSTRAINT ck_checkers_games_distinct_players
+                CHECK (white_player_id <> black_player_id),
+              ADD CONSTRAINT ck_checkers_games_board
+                CHECK (board ~ '^[.bwBW]{32}$'),
+              ADD CONSTRAINT ck_checkers_games_turn
+                CHECK (turn IN ('WHITE', 'BLACK')),
+              ADD CONSTRAINT ck_checkers_games_winner
+                CHECK (winner IN ('WHITE', 'BLACK')),
+              ADD CONSTRAINT ck_checkers_games_status
+                CHECK (
+                  (status = 'WAITING' AND black_player_id IS NULL AND winner IS NULL)
+                  OR (status = 'IN_PROGRESS' AND black_player_id IS NOT NULL AND winner IS NULL)
+                  OR (status = 'FINISHED' AND black_player_id IS NOT NULL)
+                )
+      rollback:
+        - dropTable:
+            tableName: checkers_games

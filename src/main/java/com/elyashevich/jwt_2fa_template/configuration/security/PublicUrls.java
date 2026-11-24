@@ -1,5 +1,6 @@
 package com.elyashevich.jwt_2fa_template.configuration.security;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -16,6 +17,7 @@ public final class PublicUrls {
 
     public static final RequestMatcher PUBLIC_URLS = new OrRequestMatcher(
         PathPatternRequestMatcher.withDefaults().matcher("/error"),
+        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, PREFIX + "graphql/ws"),
         PathPatternRequestMatcher.withDefaults().matcher(AUTH_TAG + "/**")
     );
 

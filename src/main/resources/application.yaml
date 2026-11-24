@@ -7,6 +7,15 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
     fallback-to-system-locale: false
+  graphql:
+    cors:
+      allowed-origins: ${app.cors.allowed-origins}
+      allowed-methods: GET, POST, OPTIONS
+      allowed-headers: Authorization, Content-Type, Accept-Language
+    http:
+      path: /api/v1/graphql
+    websocket:
+      path: /api/v1/graphql/ws
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/jwt_demo}
     username: ${DB_USERNAME:postgres}
