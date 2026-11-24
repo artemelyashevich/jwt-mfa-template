@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -20,6 +21,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -30,8 +32,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
-
-    private static final RequestMatcher PROTECTED_URLS = new NegatedRequestMatcher(PublicUrls.PUBLIC_URLS);
 
     private final ApplicationProperties applicationProperties;
     private final SecurityExceptionResponseWriter responseWriter;
@@ -55,7 +55,12 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityFilterChain filterChain(HttpSecurity http, Environment environment) {
+        RequestMatcher publicUrls = environment.matchesProfiles("local")
+            && environment.getProperty("spring.graphql.graphiql.enabled", Boolean.class, false)
+            ? new OrRequestMatcher(PublicUrls.PUBLIC_URLS, PublicUrls.GRAPHIQL)
+            : PublicUrls.PUBLIC_URLS;
+        RequestMatcher protectedUrls = new NegatedRequestMatcher(publicUrls);
         http
             .cors(Customizer.withDefaults())
             .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
@@ -63,11 +68,11 @@ public class SecurityConfiguration {
                 .authenticationEntryPoint((req, res, ex) -> responseWriter.write(res, AppExceptionCode.EX401_TOKEN_MISSING))
                 .accessDeniedHandler((req, res, ex) -> responseWriter.write(res, AppExceptionCode.EX403)))
             .authenticationProvider(tokenAuthenticationProvider)
-            .addFilterBefore(new TokenAuthenticationFilter(PROTECTED_URLS, authenticationManager(), responseWriter),
+            .addFilterBefore(new TokenAuthenticationFilter(protectedUrls, authenticationManager(), responseWriter),
                 AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(req -> req
-                .requestMatchers(PublicUrls.PUBLIC_URLS).permitAll()
-                .requestMatchers(PROTECTED_URLS).authenticated()
+                .requestMatchers(publicUrls).permitAll()
+                .requestMatchers(protectedUrls).authenticated()
                 .anyRequest().denyAll())
             .csrf(AbstractHttpConfigurer::disable)
             .formLogin(AbstractHttpConfigurer::disable)

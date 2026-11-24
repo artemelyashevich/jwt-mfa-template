@@ -31,6 +31,9 @@ public class CheckersGame {
     @Column(name = "black_player_id")
     private Long blackPlayerId;
 
+    @Column(name = "quick_match", nullable = false, updatable = false)
+    private boolean quickMatch;
+
     @Column(nullable = false, length = 32)
     private String board = "bbbbbbbbbbbb........wwwwwwwwwwww";
 
@@ -52,6 +55,19 @@ public class CheckersGame {
 
     public CheckersGame(long whitePlayerId) {
         this.whitePlayerId = whitePlayerId;
+    }
+
+    public static CheckersGame waitingForQuickMatch(long playerId) {
+        var game = new CheckersGame(playerId);
+        game.quickMatch = true;
+        return game;
+    }
+
+    public void cancelQuickMatch() {
+        if (!quickMatch || status != CheckersGameStatus.WAITING) {
+            throw new IllegalStateException("Only a waiting quick match can be cancelled");
+        }
+        status = CheckersGameStatus.CANCELLED;
     }
 
     public void join(long playerId) {

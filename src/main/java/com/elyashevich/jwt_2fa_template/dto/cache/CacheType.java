@@ -1,5 +1,6 @@
 package com.elyashevich.jwt_2fa_template.dto.cache;
 
+import com.elyashevich.jwt_2fa_template.dto.checkers.CheckersGameSnapshot;
 import com.elyashevich.jwt_2fa_template.dto.otp.OtpConfirmation;
 import com.elyashevich.jwt_2fa_template.entity.Role;
 import lombok.Getter;
@@ -29,6 +30,8 @@ public enum CacheType {
     OTP_DAILY_FAILURES(new TypeReference<Long>() {
     }),
     OTP_CONFIRMATION(new TypeReference<OtpConfirmation>() {
+    }),
+    CHECKERS_GAME_SNAPSHOT(new TypeReference<CheckersGameSnapshot>() {
     });
 
     private final TypeReference<?> type;

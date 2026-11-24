@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-add-checkers-matchmaking
+      author: elyashevich
+      changes:
+        - addColumn:
+            tableName: checkers_games
+            columns:
+              - column:
+                  name: quick_match
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >-
+              ALTER TABLE checkers_games
+              DROP CONSTRAINT ck_checkers_games_status,
+              ADD CONSTRAINT ck_checkers_games_status
+                CHECK (
+                  (status = 'WAITING' AND black_player_id IS NULL AND winner IS NULL)
+                  OR (status = 'IN_PROGRESS' AND black_player_id IS NOT NULL AND winner IS NULL)
+                  OR (status = 'FINISHED' AND black_player_id IS NOT NULL)
+                  OR (status = 'CANCELLED' AND quick_match AND black_player_id IS NULL AND winner IS NULL)
+                );
+              CREATE UNIQUE INDEX ux_checkers_games_waiting_quick_match
+                ON checkers_games (quick_match) WHERE quick_match AND status = 'WAITING';
+              CREATE INDEX ix_checkers_games_open_quick_match_white
+                ON checkers_games (white_player_id) WHERE quick_match AND status IN ('WAITING', 'IN_PROGRESS');
+              CREATE INDEX ix_checkers_games_open_quick_match_black
+                ON checkers_games (black_player_id) WHERE quick_match AND status IN ('WAITING', 'IN_PROGRESS');

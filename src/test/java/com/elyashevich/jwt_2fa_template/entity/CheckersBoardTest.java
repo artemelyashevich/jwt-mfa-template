@@ -26,11 +26,11 @@ class CheckersBoardTest {
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> board.move(CheckersSide.WHITE, List.of(10, 1)));
-        var fullRouteBoard = boardWith(10, 'w', 6, 'b', 5, 'b');
-        fullRouteBoard.move(CheckersSide.WHITE, List.of(10, 1, 12));
+        assertThat(board.position()).isEqualTo(boardWith(10, 'w', 6, 'b', 5, 'b').position());
+        board.move(CheckersSide.WHITE, List.of(10, 1, 12));
 
-        assertThat(fullRouteBoard.position()).isEqualTo(boardWith(12, 'W').position());
-        assertThat(fullRouteBoard.hasMove(CheckersSide.BLACK)).isFalse();
+        assertThat(board.position()).isEqualTo(boardWith(12, 'W').position());
+        assertThat(board.hasMove(CheckersSide.BLACK)).isFalse();
     }
 
     @Test
@@ -40,6 +40,34 @@ class CheckersBoardTest {
         board.move(CheckersSide.WHITE, List.of(9, 0));
 
         assertThat(board.position()).isEqualTo(boardWith(0, 'W', 14, 'b').position());
+    }
+
+    @Test
+    void acceptsShorterCaptureRouteWhenAnotherRouteTakesMorePieces() {
+        char[] position = boardWith(10, 'w', 6, 'b', 5, 'b').position().toCharArray();
+        position[7] = 'b';
+        var board = new CheckersBoard(new String(position));
+
+        board.move(CheckersSide.WHITE, List.of(10, 3));
+
+        assertThat(board.position()).isEqualTo(boardWith(3, 'W', 6, 'b', 5, 'b').position());
+    }
+
+    @Test
+    void findsNoMoveForAManBlockedAtTheEdge() {
+        var board = boardWith(4, 'w', 0, 'b');
+
+        assertThat(board.hasMove(CheckersSide.WHITE)).isFalse();
+    }
+
+    @Test
+    void allowsKingToSlideAcrossSeveralEmptySquares() {
+        var board = boardWith(9, 'W');
+
+        assertThat(board.hasMove(CheckersSide.WHITE)).isTrue();
+        board.move(CheckersSide.WHITE, List.of(9, 23));
+
+        assertThat(board.position()).isEqualTo(boardWith(23, 'W').position());
     }
 
     private static CheckersBoard boardWith(int square, char piece) {

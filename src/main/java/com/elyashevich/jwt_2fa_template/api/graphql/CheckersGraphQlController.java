@@ -1,9 +1,10 @@
 package com.elyashevich.jwt_2fa_template.api.graphql;
 
+import static com.elyashevich.jwt_2fa_template.api.graphql.CheckersGameUpdates.CURRENT_VERSION;
 import static com.elyashevich.jwt_2fa_template.api.graphql.GraphQlAuthentication.SOCKET_TOKEN;
 import static com.elyashevich.jwt_2fa_template.api.graphql.GraphQlAuthentication.USER_ID;
 
-import com.elyashevich.jwt_2fa_template.entity.CheckersGame;
+import com.elyashevich.jwt_2fa_template.dto.checkers.CheckersGameSnapshot;
 import com.elyashevich.jwt_2fa_template.entity.CheckersGameStatus;
 import com.elyashevich.jwt_2fa_template.entity.CheckersSide;
 import com.elyashevich.jwt_2fa_template.service.CheckersGameService;
@@ -50,6 +51,16 @@ class CheckersGraphQlController {
     }
 
     @MutationMapping
+    GameView quickMatch(@ContextValue(USER_ID) long userId) {
+        return GameView.from(checkersGameService.quickMatch(userId));
+    }
+
+    @MutationMapping
+    GameView cancelQuickMatch(@Argument UUID id, @ContextValue(USER_ID) long userId) {
+        return GameView.from(checkersGameService.cancelQuickMatch(id, userId));
+    }
+
+    @MutationMapping
     GameView joinGame(@Argument UUID id, @ContextValue(USER_ID) long userId) {
         return GameView.from(checkersGameService.join(id, userId));
     }
@@ -70,13 +81,18 @@ class CheckersGraphQlController {
             return Flux.empty();
         }
 
-        return Flux.merge(checkersGameUpdates.forGame(id), Mono.just(id.toString()))
-                .onBackpressureLatest()
+        Flux<Long> versions = checkersGameUpdates.forGame(id)
+                .scan((latest, next) -> next == CURRENT_VERSION ? next : Math.max(latest, next))
+                .distinctUntilChanged()
+                .onBackpressureLatest();
+        return Flux.merge(1, versions, Mono.just(CURRENT_VERSION))
                 .concatMap(update -> Mono.fromCallable(() -> {
                     graphQlAuthentication.authenticate(token);
-                    return GameView.from(checkersGameService.get(id, userId));
+                    return checkersGameUpdates.load(id, update, userId);
                 }).subscribeOn(Schedulers.boundedElastic()), 0)
-                .distinctUntilChanged(GameView::version)
+                .scan((latest, next) -> latest.version() >= next.version() ? latest : next)
+                .distinctUntilChanged(CheckersGameSnapshot::version)
+                .map(GameView::from)
                 .take(remaining);
     }
 
@@ -105,11 +121,11 @@ class CheckersGraphQlController {
     }
 
     record GameView(String id, String whitePlayerId, String blackPlayerId, String board, CheckersSide turn, CheckersGameStatus status, CheckersSide winner, String version) {
-        static GameView from(CheckersGame game) {
-            Long blackPlayerId = game.getBlackPlayerId();
-            return new GameView(game.getId().toString(), game.getWhitePlayerId().toString(),
-                    blackPlayerId == null ? null : blackPlayerId.toString(), game.getBoard(), game.getTurn(),
-                    game.getStatus(), game.getWinner(), game.getVersion().toString());
+        static GameView from(CheckersGameSnapshot game) {
+            Long blackPlayerId = game.blackPlayerId();
+            return new GameView(game.id().toString(), Long.toString(game.whitePlayerId()),
+                    blackPlayerId == null ? null : blackPlayerId.toString(), game.board(), game.turn(),
+                    game.status(), game.winner(), Long.toString(game.version()));
         }
     }
 }

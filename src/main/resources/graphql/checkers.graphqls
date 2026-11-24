@@ -4,6 +4,8 @@ type Query {
 
 type Mutation {
     createGame: CheckersGame!
+    quickMatch: CheckersGame!
+    cancelQuickMatch(id: ID!): CheckersGame!
     joinGame(id: ID!): CheckersGame!
     makeMove(id: ID!, expectedVersion: ID!, route: [Int!]!): CheckersGame!
 }
@@ -32,4 +34,5 @@ enum CheckersGameStatus {
     WAITING
     IN_PROGRESS
     FINISHED
+    CANCELLED
 }

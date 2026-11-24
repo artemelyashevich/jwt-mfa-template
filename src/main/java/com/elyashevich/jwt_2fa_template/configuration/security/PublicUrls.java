@@ -15,6 +15,9 @@ public final class PublicUrls {
 
     public static final String ADMIN_TAG = PREFIX + "admin";
 
+    static final RequestMatcher GRAPHIQL = PathPatternRequestMatcher.withDefaults()
+        .matcher(HttpMethod.GET, "/graphiql");
+
     public static final RequestMatcher PUBLIC_URLS = new OrRequestMatcher(
         PathPatternRequestMatcher.withDefaults().matcher("/error"),
         PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, PREFIX + "graphql/ws"),
